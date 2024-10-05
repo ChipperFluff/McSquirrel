@@ -1,6 +1,7 @@
 from .nbt import load_dat_file, DatEntry
 from .logger import log, handle_error
 from .git import commit_changes
+import nbtlib
 
 class Player:
     def __init__(self, player_file_path: str):
@@ -19,7 +20,7 @@ class Player:
         try:
             log("Preparing to kill player...")
             commit_changes("Committing changes before killing the player.")
-            self.player_data['Health'] = 0
+            self.player_data['Health'] = nbtlib.tag.Float(0.0)  # Ensure health is set using proper NBT tag type
             log("Player has been killed.")
             self.player_data.save(self.player_file_path)
         except Exception as e:
