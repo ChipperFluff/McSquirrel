@@ -6,7 +6,7 @@ setup(
     packages=find_packages(),
     entry_points={
         'console_scripts': [
-            'mcSquirrel=mcSquirrel.main:main',
+            'mcSquirrel=mcSquirrel.__main__:main',
         ],
     },
 )
