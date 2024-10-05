@@ -26,9 +26,7 @@ def main():
         print("Minecraft installation:")
         pprint(setup)
 
-        player_path = f"{setup['.minecraft']['saves']}/x/playerdata/c514c901-baae-4c8f-a377-6289fc358fd1.dat"
-        log(f"Loading player data from path: {player_path}")
-        player = Player(player_path)
+        player = Player(setup, "c514c901-baae-4c8f-a377-6289fc358fd1")
         log("Loaded player data successfully.")
 
         log("Killing the player...")
