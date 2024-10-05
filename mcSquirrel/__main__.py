@@ -34,8 +34,6 @@ def main():
         log("Killing the player...")
         player.kill()
         log("Player has been killed successfully.")
-        print("Updated Player data:")
-        pretty_print_dataclass(player.get_player_data())
 
     except Exception as e:
         handle_error(f"An error occurred during execution: {e}")
