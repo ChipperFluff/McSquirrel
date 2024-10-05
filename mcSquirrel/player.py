@@ -20,8 +20,16 @@ class Player:
         try:
             log("Preparing to kill player...")
             commit_changes("Committing changes before killing the player.")
-            self.player_data['Health'] = nbtlib.tag.Float(0.0)  # Ensure health is set using proper NBT tag type
-            log("Player has been killed.")
+
+            # Set health to zero
+            self.player_data['Health'] = nbtlib.tag.Float(0.0)
+
+            # Set other attributes to simulate death in hardcore mode
+            self.player_data['DeathTime'] = nbtlib.tag.Short(20)  # Set death animation time
+            self.player_data['HurtTime'] = nbtlib.tag.Short(10)  # Set hurt animation time
+            self.player_data['playerGameType'] = nbtlib.tag.Int(3)  # Set to spectator mode to simulate hardcore death
+
+            log("Player attributes set to simulate death.")
             self.player_data.save(self.player_file_path)
         except Exception as e:
             handle_error(f"Failed to kill player: {e}")
