@@ -80,11 +80,12 @@ class Player:
             # Set health to zero
             self.player_data['Health'] = nbtlib.tag.Float(0.0)
 
-            # Set other attributes to simulate death in hardcore mode
+            # Set additional attributes to simulate death
             self.player_data['DeathTime'] = nbtlib.tag.Short(20)  # Set death animation time
             self.player_data['HurtTime'] = nbtlib.tag.Short(10)  # Set hurt animation time
             self.player_data['playerGameType'] = nbtlib.tag.Int(3)  # Set to spectator mode to simulate hardcore death
             self.player_data['Dead'] = nbtlib.tag.Byte(1)  # Mark player as dead
+            self.player_data['Health'] = nbtlib.tag.Float(0.0)  # Ensure health is zero
 
             log("Player attributes set to simulate death.")
 
@@ -94,11 +95,17 @@ class Player:
             # If single-player, also edit the level.dat file
             if self.single_player_mode and self.level_data:
                 log("Updating level.dat to reflect player death...")
-                self.level_data['Data']['Player'] = self.player_data.data  # Update the Player tag in level.dat
-                self.level_data.save(self.level_file_path)
-                log("level.dat updated successfully.")
+
+                # Check if 'Data' and 'Player' exist before trying to modify
+                if 'Data' in self.level_data.data:
+                    self.level_data['Data']['Player'] = nbtlib.Compound(self.player_data.data)
+                    self.level_data.save(self.level_file_path)
+                    log("level.dat updated successfully.")
+                else:
+                    handle_error("Failed to update level.dat: 'Data' section missing.")
         except Exception as e:
             handle_error(f"Failed to kill player: {e}")
+
 
     def get_player_data(self):
         return self.player_data
