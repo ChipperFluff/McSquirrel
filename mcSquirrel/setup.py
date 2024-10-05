@@ -2,17 +2,14 @@ import os
 import platform
 import json
 
+from.logger import log, handle_error
+
 # Constants
-DATA_DIR = "../data"
+MODULE_DIR = os.path.dirname(os.path.realpath(__file__))  # Directory of the current script/module
+DATA_DIR = os.path.join(MODULE_DIR, "data")  # Ensure that the data folder is created in the module's directory
 SETUP_FILE = os.path.join(DATA_DIR, "setup.json")
 
-# Logging Helper
-def log(message):
-    print(f"[LOG]: {message}")
 
-# Error Handling Helper
-def handle_error(message):
-    print(f"[ERROR]: {message}")
 
 # Check if a file exists
 def file_exists(file_path):
@@ -70,6 +67,7 @@ def create_setup():
     }
 
     write_setup(setup)
+    return setup  # Return the created setup dictionary
 
 # Load the setup file
 def load_setup():
@@ -81,18 +79,17 @@ def load_setup():
 
     if not file_exists(SETUP_FILE):
         log(f"Setup file not found at: {SETUP_FILE}, assuming new installation or corruption.")
-        create_setup()
-        return
+        return create_setup()  # Create and return a new setup
 
     log("Setup file found, loading configuration...")
     try:
         with open(SETUP_FILE, "r") as setup_file:
             setup = json.load(setup_file)
             log(f"Loaded setup: {setup}")
-            return setup
+            return setup  # Return the loaded setup dictionary
     except Exception as e:
         handle_error(f"Failed to load setup file: {e}")
-        create_setup()
+        return create_setup()  # In case of failure, create a new setup
 
 # Write setup to the file
 def write_setup(setup):
