@@ -1,8 +1,7 @@
-from .nbt import load_dat_file, DatEntry
-from .logger import log, handle_error
-from .git import commit_changes
-import nbtlib
 import os
+import mcpython
+from .setup import load_setup
+from .logger import log, handle_error
 
 class Player:
     def __init__(self, setup: dict, player_uid: str):
@@ -11,23 +10,24 @@ class Player:
             self.setup = setup
             self.player_uid = player_uid
 
-            # Find paths to player.dat and level.dat files
+            # Locate the paths for player.dat and level.dat files
             self.player_file_path = self._find_player_file()
             self.level_file_path = self._find_level_file()
 
-            self.player_data = load_dat_file(self.player_file_path)
+            # Load player data using specialized Minecraft library
+            self.player_data = mcpython.load_player_data(self.player_file_path)
             self.level_data = None
 
-            if not self.player_data.data:
+            if self.player_data is None:
                 handle_error("Failed to load player data. Player data is empty.")
             else:
                 log("Player data loaded successfully.")
 
-            # Determine whether to use level.dat based on game mode
+            # Detect single-player or multiplayer mode
             self.single_player_mode = self._is_single_player()
             if self.single_player_mode:
                 log("Single-player mode detected. Loading level.dat for additional edits.")
-                self.level_data = load_dat_file(self.level_file_path)
+                self.level_data = mcpython.load_level_data(self.level_file_path)
             else:
                 log("Multiplayer mode detected. Editing only player-specific data.")
         except Exception as e:
@@ -62,12 +62,10 @@ class Player:
 
     def _is_single_player(self):
         try:
-            # Check if level.dat exists to determine if it's single-player
-            if os.path.exists(self.level_file_path):
-                playerdata_dir = os.path.dirname(self.player_file_path)
-                player_files = [f for f in os.listdir(playerdata_dir) if f.endswith('.dat')]
-                return len(player_files) == 1  # If there's only one player, it's single-player
-            return False
+            # Determine single-player mode by checking the number of player files
+            playerdata_dir = os.path.dirname(self.player_file_path)
+            player_files = [f for f in os.listdir(playerdata_dir) if f.endswith('.dat')]
+            return len(player_files) == 1  # If only one player file, assume single-player
         except Exception as e:
             handle_error(f"Error determining game mode: {e}")
             return False
@@ -75,37 +73,35 @@ class Player:
     def kill(self):
         try:
             log("Preparing to kill player...")
-            commit_changes("Committing changes before killing the player.")
+            mcpython.commit_changes("Committing changes before killing the player.")
 
-            # Set health to zero
-            self.player_data['Health'] = nbtlib.tag.Float(0.0)
-
-            # Set additional attributes to simulate death
-            self.player_data['DeathTime'] = nbtlib.tag.Short(20)  # Set death animation time
-            self.player_data['HurtTime'] = nbtlib.tag.Short(10)  # Set hurt animation time
-            self.player_data['playerGameType'] = nbtlib.tag.Int(3)  # Set to spectator mode to simulate hardcore death
-            self.player_data['Dead'] = nbtlib.tag.Byte(1)  # Mark player as dead
-            self.player_data['Health'] = nbtlib.tag.Float(0.0)  # Ensure health is zero
+            # Set health and other necessary properties to simulate death
+            self.player_data.set_health(0.0)
+            self.player_data.set_death_time(20)
+            self.player_data.set_hurt_time(10)
+            self.player_data.set_game_mode('spectator')
+            self.player_data.mark_as_dead()
 
             log("Player attributes set to simulate death.")
 
-            # Save player data
-            self.player_data.save(self.player_file_path)
+            # Save player data using the Minecraft API library
+            mcpython.save_player_data(self.player_file_path, self.player_data)
 
-            # If single-player, also edit the level.dat file
+            # If single-player, also update the level.dat file
             if self.single_player_mode and self.level_data:
                 log("Updating level.dat to reflect player death...")
-
-                # Check if 'Data' and 'Player' exist before trying to modify
-                if 'Data' in self.level_data.data:
-                    self.level_data['Data']['Player'] = nbtlib.Compound(self.player_data.data)
-                    self.level_data.save(self.level_file_path)
-                    log("level.dat updated successfully.")
-                else:
-                    handle_error("Failed to update level.dat: 'Data' section missing.")
+                self.level_data.update_player(self.player_uid, self.player_data)
+                mcpython.save_level_data(self.level_file_path, self.level_data)
+                log("level.dat updated successfully.")
         except Exception as e:
             handle_error(f"Failed to kill player: {e}")
 
-
     def get_player_data(self):
         return self.player_data
+
+# Example usage
+if __name__ == "__main__":
+    setup = load_setup()
+    player_uid = 'c514c901-baae-4c8f-a377-6289fc358fd1'
+    player = Player(setup, player_uid)
+    player.kill()

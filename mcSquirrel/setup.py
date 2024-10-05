@@ -2,14 +2,18 @@ import os
 import platform
 import json
 
-from.logger import log, handle_error
-
 # Constants
 MODULE_DIR = os.path.dirname(os.path.realpath(__file__))  # Directory of the current script/module
 DATA_DIR = os.path.join(MODULE_DIR, "data")  # Ensure that the data folder is created in the module's directory
 SETUP_FILE = os.path.join(DATA_DIR, "setup.json")
 
+# Logging Helper
+def log(message):
+    print(f"[LOG]: {message}")
 
+# Error Handling Helper
+def handle_error(message):
+    print(f"[ERROR]: {message}")
 
 # Check if a file exists
 def file_exists(file_path):
